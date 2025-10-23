@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Test de prise de décision rapide</title>
+<style>
+  html, body {
+    height: 100%;
+    margin: 0;
+    font-family: Arial, sans-serif;
+    transition: background-color 0.5s;
+  }
+
+  .page {
+    display: none;
+    min-height: 100vh;
+    width: 100vw;
+    box-sizing: border-box;
+    padding: 20px;
+  }
+
+  .active {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+  }
+
+  /* Intro : conteneur centré avec texte justifié */
+  #page1 > div {
+    max-width: 600px;
+    text-align: justify;
+  }
+
+  h1, h2 {
+    text-align: center;
+  }
+
+  p {
+    line-height: 1.5;
+    margin: 0 0 1em 0;
+  }
+
+  button {
+    background-color: #d3d3d3;
+    border: none;
+    padding: 12px 20px;
+    font-size: 16px;
+    border-radius: 5px;
+    cursor: pointer;
+    margin: 20px auto 0 auto;
+    min-width: 220px;
+    max-width: 300px;
+    display: block;
+  }
+
+  input[type="text"] {
+    display: block;
+    margin: 20px auto;
+    padding: 10px;
+    font-size: 16px;
+    width: 80%;
+    max-width: 300px;
+  }
+
+  .centered {
+    text-align: center;
+  }
+
+  /* Boutons options questions : même taille, alignés verticalement, espacement réduit */
+  .question-buttons {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 20px;
+    gap: 6px; /* réduit l’espacement */
+  }
+
+  .question-buttons button {
+    width: 250px;
+    min-height: 45px;
+    font-size: 16px;
+  }
+
+  .countdown {
+    font-size: 48px;
+    font-weight: normal;
+    margin-top: 10px;
+  }
+
+  /* Résultats page */
+  #resultats {
+    background-color: white;
+    flex-direction: column;
+    align-items: flex-start;
+    padding-top: 20px;
+    padding-bottom: 40px;
+    display: flex;
+  }
+
+  #resultats h2 {
+    width: 100%;
+    text-align: center;
+    margin: 0 auto 20px auto;
+    max-width: 600px;
+  }
+
+  #resultatsListe {
+    max-width: 600px;
+    margin: 0 auto;
+    padding-left: 40px;
+    text-align: left;
+  }
+
+  #resultats > .centered {
+    width: 100%;
+    max-width: 600px;
+    margin: 0 auto;
+    text-align: center;
+  }
+
+  @media (max-width: 600px) {
+    button {
+      width: 90%;
+      max-width: none;
+    }
+    .question-buttons button {
+      width: 90vw;
+      max-width: none;
+    }
+    #page1 > div {
+      max-width: 90vw;
+    }
+    #resultatsListe {
+      padding-left: 20px;
+    }
+  }
+</style>
+</head>
+<body>
+
+<!-- PAGE 1 : INTRO -->
+<div id="page1" class="page active" style="background-color:white;">
+  <div>
+    <h1><b>Bienvenu dans ce test de prise de décision rapide !</b></h1>
+    <p>
+      Dans le cadre de mon travail de maturité (TM), j'étudie le lien entre la pratique de patinage artistique et la rapidité de prise de décision. 
+      Tu n'as pas besoin d'être patineur.euse pour répondre à ce test.<br><br>
+      Cette expérience comporte 5 questions simples à choix multiples. Pour chaque question, tu dois choisir une réponse le plus rapidement possible.<br><br>
+      Ton temps de prise de décision sera mesuré pour chaque question.<br><br>
+      À la fin, il y aura une page affichant tes temps pour chaque question. 
+      Je te prie de faire une capture d'écran et de m'envoyer le résultat de ton test. Tes temps seront anonymes dans mon TM, il n'y a que moi qui saurai qui a fait quel temps.<br><br>
+      Lis bien chaque consigne et sois attentif.ve. Clique sur le bouton ci-dessous pour commencer.
+    </p>
+    <button onclick="nextPage('page2')">Commencer le test</button>
+  </div>
+</div>
+
+<!-- PAGE 2 : PRÉNOM -->
+<div id="page2" class="page centered" style="background-color:white;">
+  <h2>Quel est ton prénom ?</h2>
+  <input type="text" id="prenom" placeholder="Écris ton prénom ici" />
+  <button onclick="startTest()">Valider et démarrer</button>
+</div>
+
+<!-- PAGE 3 : C'EST PARTI -->
+<div id="page3" class="page centered" style="background-color:#f5e8ff;">
+  <h2>C’est parti !</h2>
+</div>
+
+<!-- PAGES DE QUESTIONS -->
+<div id="questions"></div>
+
+<!-- PAGE FINALE -->
+<div id="resultats" class="page">
+  <h2><b>Résultats du test</b></h2>
+  <div class="resultats" id="resultatsListe"></div>
+  <br /><br />
+  <div class="centered">
+    <p><b style="color:red;">N'OUBLIE PAS DE M'ENVOYER UNE CAPTURE D'ÉCRAN DE TES RÉSULTATS !!</b></p>
+    <p id="merciTexte"></p>
+  </div>
+</div>
+
+<script>
+const couleursPastel = ["#f5e8ff", "#e8f9f1", "#fff4e8", "#e8f0ff", "#ffe8f2"];
+const questionsData = [
+  ["Le matin", "L'après midi", "Le soir", "La nuit"],
+  ["La montagne", "La plage", "La ville", "La campagne"],
+  ["Les pâtes", "La pizza", "Les sushis", "La salade"],
+  ["Le sport", "Le shopping", "Lire", "Aller au cinéma"],
+  ["La pop", "Le rap", "L'électro", "Le classique"]
+];
+
+let prenom = "";
+let questionIndex = 0;
+let startTime;
+let tempsReponses = [];
+
+function nextPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function startTest() {
+  prenom = document.getElementById('prenom').value.trim();
+  if (!prenom) {
+    alert("Merci d'entrer ton prénom avant de commencer !");
+    return;
+  }
+  nextPage('page3');
+  setTimeout(() => showQuestion(0), 3000);
+}
+
+function showQuestion(i) {
+  questionIndex = i;
+  const questionPage = document.createElement('div');
+  questionPage.classList.add('page', 'active', 'centered');
+  questionPage.style.backgroundColor = couleursPastel[i];
+  questionPage.style.minHeight = "100vh";
+  questionPage.style.width = "100vw";
+
+  // Contenu question
+  questionPage.innerHTML = `
+    <h2><b>Question ${i + 1} sur 5</b></h2>
+    <br><br>
+    <p style="color:gray;">Tu préfères…</p>
+    <div class="question-buttons"></div>
+  `;
+
+  const buttonsContainer = questionPage.querySelector('.question-buttons');
+  questionsData[i].forEach(opt => {
+    const btn = document.createElement('button');
+    btn.textContent = opt;
+    btn.onclick = () => answerQuestion();
+    buttonsContainer.appendChild(btn);
+  });
+
+  // Supprime pages existantes et affiche la nouvelle question
+  document.body.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  const questionsDiv = document.getElementById('questions');
+  questionsDiv.innerHTML = "";
+  questionsDiv.appendChild(questionPage);
+
+  startTime = performance.now();
+}
+
+function answerQuestion() {
+  const endTime = performance.now();
+  const temps = (endTime - startTime).toFixed(3);
+  tempsReponses.push(temps);
+
+  if (questionIndex < questionsData.length - 1) {
+    showTransition();
+  } else {
+    showResults();
+  }
+}
+
+function showTransition() {
+  const transitionPage = document.createElement('div');
+  transitionPage.classList.add('page', 'active', 'centered');
+  const color = couleursPastel[questionIndex + 1];
+  transitionPage.style.backgroundColor = color;
+  transitionPage.style.minHeight = "100vh";
+  transitionPage.style.width = "100vw";
+  transitionPage.innerHTML = `<h2><b>Prochaine question</b></h2><br><br><div class="countdown">3</div>`;
+  document.body.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('questions').innerHTML = "";
+  document.getElementById('questions').appendChild(transitionPage);
+
+  let countdown = 3;
+  const timer = setInterval(() => {
+    countdown--;
+    transitionPage.querySelector('.countdown').textContent = countdown;
+    if (countdown === 0) {
+      clearInterval(timer);
+      showQuestion(questionIndex + 1);
+    }
+  }, 1000);
+}
+
+function showResults() {
+  nextPage('resultats');
+  let html = "";
+  let total = 0;
+  tempsReponses.forEach((t, i) => {
+    html += `<p>Question ${i + 1} : ${t} ms</p>`;
+    total += parseFloat(t);
+  });
+  const moyenne = (total / tempsReponses.length).toFixed(3);
+  html += `<p><b>Temps moyen :</b> ${moyenne} ms</p>`;
+  document.getElementById('resultatsListe').innerHTML = html;
+  document.getElementById('merciTexte').innerHTML =
+    `Merci énormément <i>${prenom}</i> de ta participation cela m'est d'une grande aide. 😊<br>Daria`;
+}
+</script>
+
+</body>
+</html>
